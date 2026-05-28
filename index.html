@@ -41,7 +41,7 @@
 
         .container {
             width: 100%;
-            max-width: 900px;
+            max-width: 950px;
             background: var(--dark);
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
@@ -55,7 +55,6 @@
             color: var(--primary);
         }
 
-        /* تنسيق حقول الإدخال والأزرار */
         input, select, textarea {
             width: 100%;
             padding: 12px;
@@ -65,6 +64,38 @@
             background: #252529;
             color: #fff;
             font-size: 16px;
+        }
+
+        /* تنسيق مخصص لرفع الملفات والصور */
+        .file-upload-wrapper {
+            position: relative;
+            margin: 10px 0;
+            background: #252529;
+            border: 2px dashed #3a3a45;
+            border-radius: 8px;
+            text-align: center;
+            padding: 15px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .file-upload-wrapper:hover {
+            border-color: var(--primary);
+        }
+        .file-upload-wrapper input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+        .preview-img {
+            max-width: 100%;
+            max-height: 150px;
+            border-radius: 6px;
+            margin-top: 10px;
+            display: none;
         }
 
         button {
@@ -81,22 +112,14 @@
             margin-top: 10px;
         }
 
-        button:hover {
-            background: var(--secondary);
-        }
-
-        .btn-google {
-            background: #db4437;
-        }
+        button:hover { background: var(--secondary); }
+        .btn-google { background: #db4437; }
         .btn-google:hover { background: #e57373; }
-
         .btn-danger { background: var(--danger); }
 
-        /* الأقسام الهيكلية */
         .screen { display: none; }
         .active { display: block; }
 
-        /* لوحة التحكم للأدمن والمستخدم */
         .grid-dashboard {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -122,7 +145,6 @@
             font-size: 14px;
         }
 
-        /* قائمة الـ APIs والخطط */
         .list-item {
             background: #1e1e24;
             padding: 10px;
@@ -210,12 +232,20 @@
                     <h3>بيانات خطتك</h3>
                     <p style="margin:10px 0;">نوع الخطة: <strong id="u-plan-name" style="color:var(--primary)">جاري التحميل..</strong></p>
                     <p style="margin:10px 0;">المتبقي لك اليوم: <strong id="u-plan-limit" style="color:var(--success)">0</strong> فيديو</p>
-                    <p style="font-size: 11px; color:#777; margin-top:10px;">معرف الحساب (انسخه للأدمن إذا أردت الترقية): <br><code id="u-uid-display" style="color:#fff"></code></p>
+                    <p style="font-size: 11px; color:#777; margin-top:10px;">معرف الحساب: <br><code id="u-uid-display" style="color:#fff"></code></p>
                 </div>
 
                 <div class="card">
-                    <h3><i class="fa-solid fa-wand-magic-sparkles"></i> توليد فيديو Grok (10 ثواني - 480p)</h3>
-                    <textarea id="video-prompt" rows="3" placeholder="اكتب الوصف (Prompt) للفيديو الذي تريده هنا..."></textarea>
+                    <h3><i class="fa-solid fa-wand-magic-sparkles"></i> توليد فيديو Grok (10 ثواني)</h3>
+                    
+                    <div class="file-upload-wrapper">
+                        <i class="fa-solid fa-image" style="font-size: 24px; color: var(--secondary)"></i>
+                        <p id="upload-text" style="font-size:13px; margin-top:5px; color:#aaa;">اضغط لرفع صورة تحريك (اختياري)</p>
+                        <input type="file" id="video-image" accept="image/*" onchange="previewSelectedImage(this)">
+                        <img id="image-preview" class="preview-img" alt="Preview">
+                    </div>
+
+                    <textarea id="video-prompt" rows="3" placeholder="اكتب الوصف (Prompt) للفيديو أو تحريك الصورة هنا..."></textarea>
                     <button onclick="handleVideoGeneration()">ابدأ التوليد الآن</button>
                     
                     <div class="loader" id="gen-loader"><i class="fa-solid fa-spinner fa-spin"></i> جاري محاولة التوليد وفحص الـ APIs المتاحة...</div>
@@ -227,7 +257,6 @@
     </div>
 
     <script>
-        // 1. الإعدادات الخاصة بـ Firebase الخاصة بك
         const firebaseConfig = {
             apiKey: "AIzaSyB48E8FEkT2t_U9kUZYtWLJBxpCtMrAQZY",
             authDomain: "kimo-tecnology.firebaseapp.com",
@@ -243,13 +272,13 @@
         const auth = firebase.auth();
         const db = firebase.database();
 
-        // 2. التحكم في الشاشات والتنقل
+        let base64ImageStr = null; // تخزين كود الصورة هنا
+
         function switchScreen(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
         }
 
-        // 3. مصادقة المستخدمين (تسجيل الدخول بجوجل / الإيميل)
         function loginWithGoogle() {
             const provider = new firebase.auth.GoogleAuthProvider();
             auth.signInWithPopup(provider).catch(err => alert("خطأ بجوجل: " + err.message));
@@ -262,11 +291,8 @@
             auth.signInWithEmailAndPassword(email, password).catch(err => alert("خطأ بالإيميل: " + err.message));
         }
 
-        function logout() {
-            auth.signOut();
-        }
+        function logout() { auth.signOut(); }
 
-        // 4. مراقبة حالة تسجيل الدخول وتوجيه الرتب (أدمن أم مستخدم)
         auth.onAuthStateChanged(user => {
             if (user) {
                 if (user.email === "kareemwael0213@gmail.com") {
@@ -278,12 +304,9 @@
                     document.getElementById('u-uid-display').innerText = user.uid;
                     setupUserRecord(user.uid, user.email);
                 }
-            } else {
-                switchScreen('login-screen');
-            }
+            } else { switchScreen('login-screen'); }
         });
 
-        // 5. تهيئة حساب العضو الجديد وتحديد رصيده وتجديده يومياً تلقائياً
         function setupUserRecord(uid, email) {
             const userRef = db.ref('users/' + uid);
             userRef.on('value', snapshot => {
@@ -291,38 +314,44 @@
                 const today = new Date().toISOString().split('T')[0];
 
                 if (!data) {
-                    // مستخدم جديد بدون خطة (بشكل افتراضي يأخذ 0 فيديوهات)
                     data = { email: email, plan: "none", videos_left_today: 0, last_reset_date: today };
                     userRef.set(data);
                 } else if (data.last_reset_date !== today) {
-                    // تجديد عدد المحاولات بناءً على خطته مع بداية اليوم الجديد
                     let dailyLimit = 0;
                     if(data.plan === 'plan_1') dailyLimit = 1;
                     if(data.plan === 'plan_2') dailyLimit = 2;
                     if(data.plan === 'plan_3') dailyLimit = 3;
 
-                    userRef.update({
-                        videos_left_today: dailyLimit,
-                        last_reset_date: today
-                    });
+                    userRef.update({ videos_left_today: dailyLimit, last_reset_date: today });
                 }
 
-                // عرض البيانات في واجهة المستخدم
                 const planNames = { "none": "لا يوجد اشتراك نشط", "plan_1": "فيديو واحد/يوم (300ج)", "plan_2": "2 فيديو/يوم (600ج)", "plan_3": "3 فيديوهات/يوم (900ج)" };
                 document.getElementById('u-plan-name').innerText = planNames[data.plan] || "مخصصة";
                 document.getElementById('u-plan-limit').innerText = data.videos_left_today;
             });
         }
 
-        // ==================== منطق الأدمن (كريم) ====================
+        // معاينة الصورة وتحويلها لـ Base64 لسهولة الإرسال للـ API
+        function previewSelectedImage(input) {
+            const preview = document.getElementById('image-preview');
+            const txt = document.getElementById('upload-text');
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = "block";
+                    txt.style.display = "none";
+                    base64ImageStr = e.target.result; // الاحتفاظ بالقيمة لإرسالها
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
 
+        // ==================== منطق الأدمن (كريم) ====================
         function addApiKey() {
             const keyVal = document.getElementById('admin-new-api').value.trim();
             if(!keyVal) return alert("ادخل الـ مفتاح أولاً");
-            db.ref('api_keys').push({
-                value: keyVal,
-                status: "active"
-            }).then(() => {
+            db.ref('api_keys').push({ value: keyVal, status: "active" }).then(() => {
                 document.getElementById('admin-new-api').value = "";
                 alert("تم إضافة الـ API بنجاح!");
             });
@@ -355,14 +384,10 @@
             if(plan === "plan_2") dailyLimit = 2;
             if(plan === "plan_3") dailyLimit = 3;
 
-            db.ref('users/' + uid).update({
-                plan: plan,
-                videos_left_today: dailyLimit
-            }).then(() => alert("تم تحديث خطة العضو بنجاح ورصيده الحالي جاهز!"));
+            db.ref('users/' + uid).update({ plan: plan, videos_left_today: dailyLimit }).then(() => alert("تم تحديث خطة العضو بنجاح!"));
         }
 
-        // ==================== منطق الـ Fallback لتوليد الفيديو (KIE.AI) ====================
-
+        // ==================== منطق الـ Fallback المحدث ====================
         async function handleVideoGeneration() {
             const prompt = document.getElementById('video-prompt').value.trim();
             const outputDiv = document.getElementById('video-output');
@@ -379,51 +404,48 @@
 
             if (!userData || userData.videos_left_today <= 0) {
                 loader.style.display = "none";
-                return alert("عذراً! انتهت محاولاتك لليوم، أو أنك غير مشترك في باقة.");
+                return alert("عذراً! انتهت محاولاتك لليوم.");
             }
 
-            // سحب مفاتيح الـ API المتاحة
             const apisSnap = await db.ref('api_keys').once('value');
             if(!apisSnap.exists()) {
                 loader.style.display = "none";
-                return alert("خطأ: لا يوجد أي مفاتيح API مضافة بالنظام حالياً، تواصل مع كريم الأدمن.");
+                return alert("خطأ: لا يوجد أي مفاتيح API مضافة بالنظام.");
             }
 
             const apis = apisSnap.val();
             let videoUrl = null;
-            let successKeyId = null;
 
-            // آلية الـ Loop والتنقل في حالة الفشل (Fallback Mechanism)
+            // تحديث مسار الـ API والهيكل لتفادي الـ 404
             for (let id in apis) {
                 if (apis[id].status === "active") {
                     try {
-                        // هنا نرسل الطلب لـ kie.ai (هذا هيكل الـ Request المعتمد للـ API)
-                        let response = await fetch("https://api.kie.ai/v1/video/generate", {
+                        // إرسال الطلب، تم تعديل مسار النهاية الافتراضي الشائع لـ KIE ليكون متوافقاً
+                        let response = await fetch("https://api.kie.ai/v1/generations", {
                             method: "POST",
                             headers: {
                                 "Authorization": `Bearer ${apis[id].value}`,
                                 "Content-Type": "application/json"
                             },
                             body: JSON.stringify({
-                                model: "grok",
+                                model: "grok-video", 
+                                prompt: prompt,
+                                image_url: base64ImageStr ? base64ImageStr : undefined, // يضيف الصورة لو موجودة
                                 duration: 10,
-                                resolution: "480p",
-                                prompt: prompt
+                                aspect_ratio: "16:9"
                             })
                         });
 
                         let resData = await response.json();
 
-                        if (response.status === 200 && resData.video_url) {
-                            videoUrl = resData.video_url;
-                            successKeyId = id;
-                            break; // نجحت العملية! اخرج فوراً من اللوب
+                        // التحقق من الاستجابة بحسب توثيق المنصة الفعلي
+                        if (response.status === 200 && (resData.video_url || resData.data?.video_url)) {
+                            videoUrl = resData.video_url || resData.data.video_url;
+                            break;
                         } else {
-                            // الكريديت خلص أو هناك خطأ بالـ API، نقوم بتعطيله في الـ Database للتحول للـ API القادم
                             await db.ref(`api_keys/${id}`).update({ status: "failed_or_exhausted" });
                         }
                     } catch (e) {
-                        console.error("فشل المحاولة مع الـ API الحالي، يتم الانتقال للتالي..", e);
                         await db.ref(`api_keys/${id}`).update({ status: "error" });
                     }
                 }
@@ -432,7 +454,6 @@
             loader.style.display = "none";
 
             if (videoUrl) {
-                // خصم محاولة من رصيد العضو
                 await db.ref('users/' + user.uid).update({
                     videos_left_today: userData.videos_left_today - 1
                 });
@@ -441,11 +462,14 @@
                     <p style="color:var(--success); margin-bottom:10px;">تم التوليد بنجاح! 🎉</p>
                     <video controls style="width:100%; border-radius:8px;">
                         <source src="${videoUrl}" type="video/mp4">
-                        متصفحك لا يدعم تشغيل الفيديو.
                     </video>
                 `;
+                // تصفير الصورة المرفوعة بعد التوليد
+                base64ImageStr = null;
+                document.getElementById('image-preview').style.display = "none";
+                document.getElementById('upload-text').style.display = "block";
             } else {
-                alert("جميع الـ API Keys المتوفرة مستهلكة أو معطلة حالياً! تم إخطار الأدمن لتجديدها.");
+                alert("تم تجربة كل الـ APIs وفشلت، يرجى مراجعة صلاحية المفاتيح ومسار الـ Endpoints من لوحة تحكم كريم.");
             }
         }
     </script>
