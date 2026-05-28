@@ -5,10 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kimo Technology - منصة إنتاج الفيديو الذكية</title>
     
+    <!-- Firebase SDKs (v9 Compat) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
+    <!-- Google Fonts & FontAwesome Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -181,9 +183,10 @@
 
     <div class="container">
 
+        <!-- 1. شاشة تسجيل الدخول والاشتراك -->
         <div id="screen-auth" class="screen active">
             <h2><i class="fa-solid fa-bolt"></i> منصة Kimo Technology للفيديو</h2>
-            <p style="text-align: center; color: #888; margin-bottom: 20px;">توليد كليبات Grok بدقة 480p بالهيكل الجديد</p>
+            <p style="text-align: center; color: #888; margin-bottom: 20px;">توليد كليبات Grok الذكية مع نظام الفحص التلقائي للمهام</p>
             
             <button class="btn-google" onclick="signWithGoogle()"><i class="fa-brands fa-google"></i> الدخول السريع بحساب Google</button>
             
@@ -194,6 +197,7 @@
             <button style="background:#26262b; color:#aaa;" onclick="signWithEmail('register')">إنشاء حساب جديد</button>
         </div>
 
+        <!-- 2. لوحة تحكم الأدمن (كريم وايل) -->
         <div id="screen-admin" class="screen">
             <div class="top-bar">
                 <h3>مرحباً القائد كريم 👑 (لوحة التحكم)</h3>
@@ -201,6 +205,7 @@
             </div>
             
             <div class="layout-grid">
+                <!-- إدارة الـ APIs -->
                 <div class="card">
                     <h4><i class="fa-solid fa-key"></i> واجهات الـ API (kie.ai)</h4>
                     <input type="text" id="admin-api-key" placeholder="ألصق الـ API Key الجديد هنا">
@@ -210,6 +215,7 @@
                     <div id="admin-apis-list" style="max-height: 200px; overflow-y:auto; margin-top:10px;"></div>
                 </div>
 
+                <!-- إدارة خطط المشتركين تلقائياً -->
                 <div class="card">
                     <h4><i class="fa-solid fa-users"></i> التحكم في اشتراكات الأعضاء</h4>
                     <div id="admin-users-list" style="max-height: 350px; overflow-y:auto;"></div>
@@ -217,6 +223,7 @@
             </div>
         </div>
 
+        <!-- 3. لوحة تحكم المستخدم العادي -->
         <div id="screen-user" class="screen">
             <div class="top-bar">
                 <div>أهلاً بك: <span id="user-name" class="badge">..</span></div>
@@ -224,6 +231,7 @@
             </div>
 
             <div class="layout-grid">
+                <!-- كارت الباقة والرصيد اليومي -->
                 <div class="card" style="text-align: center;">
                     <h4>تفاصيل اشتراكك</h4>
                     <div style="font-size: 35px; color: var(--primary); margin: 15px 0;"><i class="fa-solid fa-box-open"></i></div>
@@ -231,9 +239,11 @@
                     <p style="margin-top:10px;">الفيديوهات المتاحة لك اليوم: <strong id="user-counter-txt" style="color:var(--success); font-size:20px;">0</strong></p>
                 </div>
 
+                <!-- استوديو التوليد المحدث بالتشكيل المعتمد والـ Polling -->
                 <div class="card">
                     <h4><i class="fa-solid fa-wand-magic-sparkles"></i> استوديو توليد Grok Video</h4>
                     
+                    <!-- صندوق رفع الصور الاختياري -->
                     <div class="upload-box">
                         <i class="fa-solid fa-cloud-arrow-up" style="font-size:22px; color:var(--primary)"></i>
                         <p id="up-hint" style="font-size:12px; color:#888; margin-top:5px;">ارفع صورة تحريك اختيارية (Image to Video)</p>
@@ -254,7 +264,7 @@
     </div>
 
     <script>
-        // داتا الفايربيز المعتمدة لمشروعك
+        // إعدادات قاعدة بيانات فايربيز الخاصة بمشروعك
         const firebaseConfig = {
             apiKey: "AIzaSyB48E8FEkT2t_U9kUZYtWLJBxpCtMrAQZY",
             authDomain: "kimo-tecnology.firebaseapp.com",
@@ -279,7 +289,7 @@
 
         function signWithGoogle() {
             const p = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(p).catch(e => alert("مشكلة جوجل (تأكد من إضافة الدومين في الـ Firebase Console): " + e.message));
+            auth.signInWithPopup(p).catch(e => alert("مشكلة جوجل: " + e.message));
         }
 
         function signWithEmail(type) {
@@ -434,8 +444,9 @@
 
             const apis = apiSnap.val();
             let successResultText = null;
+            let activeUsedKey = null;
 
-            // اللوب السحري للتنقل التلقائي وفحص الأخطاء بدقة
+            // اللوب للتنقل التلقائي وفحص الأخطاء بدقة
             for (let id in apis) {
                 if (apis[id].status === "active") {
                     try {
@@ -443,7 +454,7 @@
                         myHeaders.append("Authorization", `Bearer ${apis[id].value}`);
                         myHeaders.append("Content-Type", "application/json");
 
-                        // اختيار نوع الموديل حسب التشكيل بناءً على وجود صورة مرفوعة
+                        // اختيار نوع الموديل حسب وجود صورة مرفوعة
                         const modelSelected = globalBase64Img ? "grok-imagine/image-to-video" : "grok-imagine/text-to-video";
 
                         // البارامترات الرسمية الصارمة المطلوبة من التوثيق لضمان قبول الطلب
@@ -478,9 +489,9 @@
 
                         if (response.status === 200 || response.status === 201) {
                             successResultText = resultText;
+                            activeUsedKey = apis[id].value; // الاحتفاظ بالمفتاح الناجح لعمل فحص دوري به
                             break; 
                         } else {
-                            // طباعة الأخطاء الحقيقية القادمة من سيرفرهم في الـ Console لمعرفة السبب فوراً
                             console.error(`❌ خطأ في المفتاح [${id}] - كود الحالة: ${response.status}. رد السيرفر:`, resultText);
                             await db.ref(`api_keys/${id}`).update({ status: "exhausted_or_error" });
                         }
@@ -499,10 +510,15 @@
                     videos_left_today: uData.videos_left_today - 1
                 });
 
+                // تحويل النص المستلم إلى كائن JSON لقراءة الـ taskId
+                const responseData = JSON.parse(successResultText);
+                const taskId = responseData.data.taskId;
+
                 resBox.innerHTML = `
                     <p style="color:var(--success); font-weight:bold; margin-bottom:5px;">🎉 تم إنشاء مَهمة التوليد بنجاح واستهلاك 1 كريديت!</p>
-                    <p style="font-size:12px; color:#aaa; margin-bottom:10px;">بيانات الـ Task المستلمة:</p>
-                    <div class="api-response-log">${successResultText}</div>
+                    <div id="status-container" style="background:#26262b; padding:15px; border-radius:8px; margin-top:10px; border:1px solid #3a3a45;">
+                        <p id="status-text"><i class="fa-solid fa-circle-notch fa-spin" style="color:var(--secondary)"></i> جاري معالجة الفيديو وتوليده في السيرفر الآن... (يتم الفحص تلقائياً)</p>
+                    </div>
                 `;
                 
                 // إعادة تهيئة حقول الرفع والتكست
@@ -510,9 +526,72 @@
                 document.getElementById('view-upload-img').style.display = "none";
                 document.getElementById('up-hint').style.display = "block";
                 document.getElementById('video-prompt-input').value = "";
+
+                // تشغيل التايمر السحري للكشف عن الفيديو
+                startPolling(taskId, activeUsedKey);
+
             } else {
                 alert("تم تجربة جميع مفاتيح الـ API المتوفرة ولكنها مستهلكة أو غير صالحة. يرجى مراجعة الـ Console (F12) وتحديث المفاتيح أو إعادتها لـ active في الفايربيز.");
             }
+        }
+
+        // ==================== [ محرك الفحص الدوري التلقائي للمهمة ] ====================
+        function startPolling(taskId, apiKey) {
+            const statusText = document.getElementById('status-text');
+            const statusContainer = document.getElementById('status-container');
+
+            // تشغيل التايمر كل 15 ثانية للكشف على حالة المهمة
+            const checkInterval = setInterval(async () => {
+                try {
+                    const myHeaders = new Headers();
+                    myHeaders.append("Authorization", `Bearer ${apiKey}`);
+                    myHeaders.append("Content-Type", "application/json");
+
+                    const rawBody = JSON.stringify({ "taskId": taskId });
+
+                    const requestOptions = {
+                        method: "POST",
+                        headers: myHeaders,
+                        body: rawBody,
+                        redirect: "follow"
+                    };
+
+                    let response = await fetch("https://api.kie.ai/api/v1/jobs/getTask", requestOptions);
+                    let resultText = await response.text();
+                    let taskData = JSON.parse(resultText);
+
+                    if (taskData && taskData.data) {
+                        const taskStatus = taskData.data.status; // قراءة حالة الطلب الحالية
+
+                        if (taskStatus === "SUCCEEDED" || taskStatus === "success") {
+                            // وقف الفحص التلقائي فوراً
+                            clearInterval(checkInterval);
+                            
+                            // قراءة رابط الفيديو النهائي من رد السيرفر
+                            const videoUrl = taskData.data.result || taskData.data.videoUrl || taskData.data.video_url;
+
+                            statusContainer.innerHTML = `
+                                <p style="color:var(--success); font-weight:bold; margin-bottom:10px;">👑 كليبك جاهز للمشاهدة والتحميل الآن يا بطل!</p>
+                                <video controls autoplay style="width:100%; border-radius:8px; border:1px solid #444; max-height:400px; background:#000;">
+                                    <source src="${videoUrl}" type="video/mp4">
+                                    متصفحك لا يدعم تشغيل الفيديو.
+                                </video>
+                                <a href="${videoUrl}" target="_blank" style="display:block; text-align:center; background:var(--success); color:white; padding:10px; border-radius:8px; margin-top:10px; text-decoration:none; font-weight:bold;"><i class="fa-solid fa-download"></i> تحميل الفيديو مباشرة</a>
+                            `;
+                        } 
+                        else if (taskStatus === "FAILED" || taskStatus === "failed") {
+                            clearInterval(checkInterval);
+                            statusContainer.innerHTML = `<p style="color:var(--danger); font-weight:bold;">❌ السيرفر فشل في توليد المشهد. يرجى تعديل الوصف والمحاولة من جديد.</p>`;
+                        } 
+                        else {
+                            // الحالة ما زالت PROCESSING أو PENDING
+                            statusText.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin" style="color:var(--primary)"></i> السيرفر يقوم بصناعة الكليب وتأثيراته حالياً... جاري الانتظار ومستمرون في الكشف.`;
+                        }
+                    }
+                } catch (err) {
+                    console.error("خطأ أثناء الكشف الدوري على المهمة:", err);
+                }
+            }, 15000); 
         }
     </script>
 </body>
