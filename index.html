@@ -5,10 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kimo Technology - منصة إنتاج الفيديو الذكية</title>
     
+    <!-- Firebase SDKs (v9 Compat) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
+    <!-- Google Fonts & FontAwesome Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -57,7 +59,6 @@
             text-align: center;
         }
 
-        /* حقول الإدخال */
         input, select, textarea {
             width: 100%;
             padding: 12px 15px;
@@ -75,7 +76,6 @@
             border-color: var(--primary);
         }
 
-        /* الأزرار */
         button {
             width: 100%;
             padding: 12px;
@@ -94,13 +94,10 @@
         .btn-google { background: #db4437; margin-bottom: 15px; }
         .btn-google:hover { background: #e57373; }
         .btn-danger { background: var(--danger); }
-        .btn-danger:hover { background: #ff7675; }
 
-        /* الأنظمة الشاشات */
         .screen { display: none; }
         .screen.active { display: block; }
 
-        /* تصميم الـ Dashboard الجانبي */
         .layout-grid {
             display: grid;
             grid-template-columns: 1fr 1.3fr;
@@ -119,7 +116,6 @@
             border: 1px solid #2d2d35;
         }
 
-        /* رفع الملفات */
         .upload-box {
             border: 2px dashed #4e4e5a;
             padding: 20px;
@@ -140,7 +136,6 @@
             max-width: 100%; max-height: 140px; border-radius: 6px; margin-top: 10px; display: none;
         }
 
-        /* الهيدر أو البار العلوي */
         .top-bar {
             display: flex;
             justify-content: space-between;
@@ -150,7 +145,6 @@
             margin-bottom: 25px;
         }
 
-        /* قوايم الأدمن وإدارة المستخدمين */
         .user-row {
             background: var(--input-bg);
             padding: 12px;
@@ -168,12 +162,27 @@
         .loader {
             display: none; text-align: center; margin: 15px 0; color: var(--secondary); font-weight: bold;
         }
+        
+        .api-response-log {
+            background: #000;
+            color: #55efc4;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            text-align: left;
+            direction: ltr;
+            font-size: 12px;
+            overflow-x: auto;
+            margin-top: 10px;
+            border: 1px solid #222;
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
 
+        <!-- 1. شاشة تسجيل الدخول والاشتراك -->
         <div id="screen-auth" class="screen active">
             <h2><i class="fa-solid fa-bolt"></i> منصة Kimo Technology للفيديو</h2>
             <p style="text-align: center; color: #888; margin-bottom: 20px;">توليد كليبات Grok بدقة 480p ولمدة 10 ثوانٍ</p>
@@ -187,6 +196,7 @@
             <button style="background:#26262b; color:#aaa;" onclick="signWithEmail('register')">إنشاء حساب جديد</button>
         </div>
 
+        <!-- 2. لوحة تحكم الأدمن (كريم وايل) -->
         <div id="screen-admin" class="screen">
             <div class="top-bar">
                 <h3>مرحباً القائد كريم 👑 (لوحة التحكم)</h3>
@@ -194,6 +204,7 @@
             </div>
             
             <div class="layout-grid">
+                <!-- إدارة الـ APIs -->
                 <div class="card">
                     <h4><i class="fa-solid fa-key"></i> واجهات الـ API (kie.ai)</h4>
                     <input type="text" id="admin-api-key" placeholder="ألصق الـ API Key الجديد هنا">
@@ -203,15 +214,15 @@
                     <div id="admin-apis-list" style="max-height: 200px; overflow-y:auto; margin-top:10px;"></div>
                 </div>
 
+                <!-- إدارة خطط المشتركين تلقائياً -->
                 <div class="card">
                     <h4><i class="fa-solid fa-users"></i> التحكم في اشتراكات الأعضاء</h4>
-                    <p style="font-size:12px; color:#777; margin-bottom:10px;">اضغط على تعديل الخطة لأي عضو مسجل مباشرة:</p>
-                    <div id="admin-users-list" style="max-height: 350px; overflow-y:auto;">
-                        </div>
+                    <div id="admin-users-list" style="max-height: 350px; overflow-y:auto;"></div>
                 </div>
             </div>
         </div>
 
+        <!-- 3. لوحة تحكم المستخدم العادي -->
         <div id="screen-user" class="screen">
             <div class="top-bar">
                 <div>أهلاً بك: <span id="user-name" class="badge">..</span></div>
@@ -219,30 +230,31 @@
             </div>
 
             <div class="layout-grid">
+                <!-- كارت الباقة والرصيد اليومي -->
                 <div class="card" style="text-align: center;">
-                    <h4>تفاصيل اشتراكك البنكي</h4>
+                    <h4>تفاصيل اشتراكك</h4>
                     <div style="font-size: 35px; color: var(--primary); margin: 15px 0;"><i class="fa-solid fa-box-open"></i></div>
                     <p>باقتك الحالية: <strong id="user-plan-txt" style="color:var(--secondary)">جاري الفحص..</strong></p>
                     <p style="margin-top:10px;">الفيديوهات المتاحة لك اليوم: <strong id="user-counter-txt" style="color:var(--success); font-size:20px;">0</strong></p>
-                    <hr style="border-color:#2d2d35; margin: 15px 0;">
-                    <p style="font-size:11px; color:#555;">إذا أردت الترقية، تواصل مع كريم وأرسل له إيميلك.</p>
                 </div>
 
+                <!-- استوديو التوليد المحدث بالتشكيل الجديد -->
                 <div class="card">
                     <h4><i class="fa-solid fa-wand-magic-sparkles"></i> استوديو توليد Grok Video</h4>
                     
+                    <!-- صندوق رفع الصور الاختياري -->
                     <div class="upload-box">
                         <i class="fa-solid fa-cloud-arrow-up" style="font-size:22px; color:var(--primary)"></i>
-                        <p id="up-hint" style="font-size:12px; color:#888; margin-top:5px;">ارفع صورة لتحريكها (اختياري - Image to Video)</p>
+                        <p id="up-hint" style="font-size:12px; color:#888; margin-top:5px;">ارفع صورة تحريك اختيارية (Image to Video)</p>
                         <input type="file" id="video-file-img" accept="image/*" onchange="convertImgToBase64(this)">
                         <img id="view-upload-img" class="preview-img">
                     </div>
 
-                    <textarea id="video-prompt-input" rows="4" placeholder="اكتب تفاصيل المشهد اللي عايز تعمله هنا بالكامل..."></textarea>
+                    <textarea id="video-prompt-input" rows="4" placeholder="اكتب تفاصيل المشهد الذي تريد توليده هنا بالكامل..."></textarea>
                     
                     <button onclick="startGeneratingProcess()"><i class="fa-solid fa-play"></i> ابدأ صناعة الفيديو الآن</button>
                     
-                    <div class="loader" id="main-loader"><i class="fa-solid fa-circle-notch fa-spin"></i> جاري فحص رصيدك وتجربة الـ APIs المتاحة...</div>
+                    <div class="loader" id="main-loader"><i class="fa-solid fa-circle-notch fa-spin"></i> جاري إرسال المهمة وفحص الـ APIs بالترتيب...</div>
                     <div id="video-result-box" style="margin-top: 15px;"></div>
                 </div>
             </div>
@@ -251,7 +263,6 @@
     </div>
 
     <script>
-        // تكوين الفايربيز الخاص بمشروعك كيمو تكنولوجي
         const firebaseConfig = {
             apiKey: "AIzaSyB48E8FEkT2t_U9kUZYtWLJBxpCtMrAQZY",
             authDomain: "kimo-tecnology.firebaseapp.com",
@@ -267,21 +278,18 @@
         const auth = firebase.auth();
         const db = firebase.database();
 
-        let globalBase64Img = null; // يحمل داتا الصورة لو تم رفعها
+        let globalBase64Img = null;
 
-        // التنقل الممنهج بين الواجهات
         function changeView(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
         }
 
-        // تسجيل الدخول بجوجل
         function signWithGoogle() {
             const p = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(p).catch(e => alert("مشكلة تسجيل جوجل: " + e.message));
+            auth.signInWithPopup(p).catch(e => alert("مشكلة تسجيل جوجل (تأكد من إضافة الدومين في الـ Firebase Console): " + e.message));
         }
 
-        // تسجيل الدخول أو إنشاء حساب بالإيميل
         function signWithEmail(type) {
             const email = document.getElementById('auth-email').value.trim();
             const pass = document.getElementById('auth-pass').value;
@@ -290,15 +298,12 @@
             if(type === 'login') {
                 auth.signInWithEmailAndPassword(email, pass).catch(e => alert("خطأ بالدخول: " + e.message));
             } else {
-                auth.createUserWithEmailAndPassword(email, pass).then(res => {
-                    alert("تم إنشاء الحساب بنجاح!");
-                }).catch(e => alert("خطأ بالتسجيل: " + e.message));
+                auth.createUserWithEmailAndPassword(email, pass).then(() => alert("تم إنشاء الحساب!")).catch(e => alert("خطأ بالتسجيل: " + e.message));
             }
         }
 
         function logOut() { auth.signOut(); }
 
-        // مراقبة ورصد الحساب والتحويل للأدمن أو العضو
         auth.onAuthStateChanged(user => {
             if(user) {
                 if(user.email === "kareemwael0213@gmail.com") {
@@ -314,7 +319,6 @@
             }
         });
 
-        // تحويل الصورة المرفوعة فوراً لـ Base64 string لدمجها في الـ JSON
         function convertImgToBase64(element) {
             const file = element.files[0];
             if(file) {
@@ -329,23 +333,20 @@
             }
         }
 
-        // ==================== [ منطق عمل الأعضاء وتجديد العداد ] ====================
         function syncUserDashboard(uid, email) {
             const uRef = db.ref('users/' + uid);
             uRef.on('value', snap => {
                 let uData = snap.val();
-                const todayStr = new Date().toISOString().split('T')[0]; // صيغة YYYY-MM-DD
+                const todayStr = new Date().toISOString().split('T')[0];
 
                 if(!uData) {
                     uData = { email: email, plan: "none", videos_left_today: 0, last_reset_date: todayStr };
                     uRef.set(uData);
                 } else if (uData.last_reset_date !== todayStr) {
-                    // تجديد تلقائي فوري عند تغير التاريخ اليومي بناء على خطته
                     let limit = 0;
                     if(uData.plan === 'plan_1') limit = 1;
                     if(uData.plan === 'plan_2') limit = 2;
                     if(uData.plan === 'plan_3') limit = 3;
-
                     uRef.update({ videos_left_today: limit, last_reset_date: todayStr });
                 }
 
@@ -355,18 +356,16 @@
             });
         }
 
-        // ==================== [ لوحة تحكم الأدمن الذكية ] ====================
         function saveNewApiKey() {
             const key = document.getElementById('admin-api-key').value.trim();
             if(!key) return alert("اكتب المفتاح أولاً!");
             db.ref('api_keys').push({ value: key, status: "active" }).then(() => {
                 document.getElementById('admin-api-key').value = "";
-                alert("تم الحفظ والمزامنة بنجاح!");
+                alert("تم حفظ ومزامنة المفتاح الجديد!");
             });
         }
 
         function loadAdminData() {
-            // 1. عرض الـ APIs المتاحة
             db.ref('api_keys').on('value', snap => {
                 const box = document.getElementById('admin-apis-list');
                 box.innerHTML = "";
@@ -374,14 +373,13 @@
                     const d = child.val();
                     box.innerHTML += `
                         <div style="background:#26262b; padding:8px; border-radius:6px; margin-bottom:5px; font-size:12px; display:flex; justify-content:space-between;">
-                            <span>${d.value.substring(0,18)}...</span>
-                            <span style="color:${d.status === 'active' ? 'var(--success)' : 'var(--danger)'}">${d.status === 'active' ? 'نشط' : 'معطل'}</span>
+                            <span>${d.value.substring(0,15)}...</span>
+                            <span style="color:${d.status === 'active' ? 'var(--success)' : 'var(--danger)'}">${d.status === 'active' ? 'نشط ومتاح' : 'مستهلك/خطأ'}</span>
                         </div>
                     `;
                 });
             });
 
-            // 2. عرض قايمة الأعضاء مباشرة مع التحكم في الباقات (تحديث ديناميكي بدون نسخ الـ UIDs)
             db.ref('users').on('value', snap => {
                 const box = document.getElementById('admin-users-list');
                 box.innerHTML = "";
@@ -390,14 +388,14 @@
                     const u = child.val();
                     box.innerHTML += `
                         <div class="user-row">
-                            <span><strong>الإيميل:</strong> ${u.email}</span>
-                            <span><strong>المتبقي اليوم:</strong> ${u.videos_left_today} فيديو</span>
+                            <span><strong>الحساب:</strong> ${u.email}</span>
+                            <span><strong>رصيد اليوم:</strong> ${u.videos_left_today}</span>
                             <div style="display:flex; gap:10px; margin-top:5px;">
                                 <select id="sel-${uid}" style="margin:0; padding:5px;">
-                                    <option value="none" ${u.plan==='none'?'selected':''}>إلغاء الخطة</option>
-                                    <option value="plan_1" ${u.plan==='plan_1'?'selected':''}>خطة 300ج (1 ف)</option>
-                                    <option value="plan_2" ${u.plan==='plan_2'?'selected':''}>خطة 600ج (2 ف)</option>
-                                    <option value="plan_3" ${u.plan==='plan_3'?'selected':''}>خطة 900ج (3 ف)</option>
+                                    <option value="none" ${u.plan==='none'?'selected':''}>إلغاء الباقة</option>
+                                    <option value="plan_1" ${u.plan==='plan_1'?'selected':''}>خطة 1 فيديو (300ج)</option>
+                                    <option value="plan_2" ${u.plan==='plan_2'?'selected':''}>خطة 2 فيديو (600ج)</option>
+                                    <option value="plan_3" ${u.plan==='plan_3'?'selected':''}>خطة 3 فيديو (900ج)</option>
                                 </select>
                                 <button style="margin:0; width:auto; padding:5px 10px; font-size:12px;" onclick="executePlanUpdate('${uid}')">حفظ</button>
                             </div>
@@ -413,17 +411,16 @@
             if(plan === "plan_1") limit = 1;
             if(plan === "plan_2") limit = 2;
             if(plan === "plan_3") limit = 3;
-
-            db.ref('users/' + uid).update({ plan: plan, videos_left_today: limit }).then(() => alert("تم تحديث خطة المشترك!"));
+            db.ref('users/' + uid).update({ plan: plan, videos_left_today: limit }).then(() => alert("تم التحديث!"));
         }
 
-        // ==================== [ المحرك الفعلي والـ Fallback لـ KIE.AI ] ====================
+        // ==================== [ محرك التوليد بالتشكيل الرسمي الجديد ] ====================
         async function startGeneratingProcess() {
             const prompt = document.getElementById('video-prompt-input').value.trim();
             const loader = document.getElementById('main-loader');
             const resBox = document.getElementById('video-result-box');
 
-            if(!prompt) return alert("اكتب الـ Prompt أولاً لوصف الفيديو المُراد توليده!");
+            if(!prompt) return alert("يرجى كتابة وصف المشهد أولاً!");
 
             resBox.innerHTML = "";
             loader.style.display = "block";
@@ -434,51 +431,70 @@
 
             if(!uData || uData.videos_left_today <= 0) {
                 loader.style.display = "none";
-                return alert("عذراً! انتهت باقة الفيديوهات المتاحة لك اليوم. يرجى الشحن أو الانتظار لغدٍ.");
+                return alert("عذراً! ليس لديك رصيد فيديوهات متاح اليوم.");
             }
 
-            // سحب مفاتيح الـ API المتاحة لتجربتها بالترتيب
             const apiSnap = await db.ref('api_keys').once('value');
             if(!apiSnap.exists()) {
                 loader.style.display = "none";
-                return alert("السيستم لا يحتوي على أي مفاتيح API حالياً! تواصل مع الأدمن كريم.");
+                return alert("لا يوجد أي مفاتيح API نشطة بالنظام حالياً.");
             }
 
             const apis = apiSnap.val();
-            let finalVideoUrl = null;
+            let successResultText = null;
 
-            // آلية الـ Fallback الشاملة للتنقل وتجربة المفاتيح واحد تلو الآخر عند وجود مشاكل رصيد أو سيرفر
+            // اللوب السحري للتنقل التلقائي بين المفاتيح في حال فشل أي مفتاح
             for (let id in apis) {
                 if (apis[id].status === "active") {
                     try {
-                        // استخدام الرابط المعتمد الصحيح للمنصات المشابهة لتفادي أخطاء الـ 404 السابقة
-                        let response = await fetch("https://api.kie.ai/v1/video/generations", {
-                            method: "POST",
-                            headers: {
-                                "Authorization": `Bearer ${apis[id].value}`,
-                                "Content-Type": "application/json"
-                            },
-                            body: JSON.stringify({
-                                model: "grok-video",
-                                prompt: prompt,
-                                image: globalBase64Img ? globalBase64Img : undefined, // يتم إرساله فقط لو المستخدم رفع صورة
-                                duration: 10,
-                                resolution: "480p"
-                            })
+                        // إعداد الـ Headers بناءً على التشكيل الرسمي المرسل منك بالظبط
+                        const myHeaders = new Headers();
+                        myHeaders.append("Authorization", `Bearer ${apis[id].value}`);
+                        myHeaders.append("Content-Type", "application/json");
+
+                        // تحديد الموديل بناءً على وجود صورة مرفوعة أم لا
+                        const modelSelected = globalBase64Img ? "grok-imagine/image-to-video" : "grok-imagine/text-to-video";
+
+                        // تجهيز الـ Body بالتركيبة المطلوبة بالظبط (input داخله الخصائص)
+                        const inputData = {
+                            "prompt": prompt,
+                            "aspect_ratio": "16:9",
+                            "mode": "normal",
+                            "duration": "10", // طلب المستخدم لـ 10 ثواني
+                            "resolution": "480p"
+                        };
+
+                        // إذا رفع المستخدم صورة يتم دمجها داخل كائن الـ input
+                        if (globalBase64Img) {
+                            inputData["image_url"] = globalBase64Img;
+                        }
+
+                        const rawBody = JSON.stringify({
+                            "model": modelSelected,
+                            "callBackUrl": "https://kimo-tecnology.firebaseapp.com/api/callback", // رابط افتراضي للـ Callback
+                            "input": inputData
                         });
 
-                        let resData = await response.json();
+                        const requestOptions = {
+                            method: "POST",
+                            headers: myHeaders,
+                            body: rawBody,
+                            redirect: "follow"
+                        };
 
-                        // التحقق من استجابة النظام بنجاح وتوافر الرابط
-                        if (response.status === 200 && (resData.video_url || resData.data?.video_url)) {
-                            finalVideoUrl = resData.video_url || resData.data.video_url;
-                            break; // نجحت العملية! اخرج فوراً من الحلقة واعرض الفيديو
+                        // ضرب رابط الـ Endpoint الرسمي الصحيح لمنع الـ 404
+                        let response = await fetch("https://api.kie.ai/api/v1/jobs/createTask", requestOptions);
+                        let resultText = await response.text();
+
+                        if (response.status === 200 || response.status === 201) {
+                            successResultText = resultText;
+                            break; // نجح الإرسال وإنشاء المهمة! اخرج من اللوب فوراً
                         } else {
-                            // إذا انتهت الكريديت أو واجه مشكلة، قم بتعطيل هذا المفتاح في الفايربيز والانتقال للتالي فوراً
+                            // لو الكريديت خلص أو المفتاح محظور علم عليه كـ معطل عشان السيستم يجرب اللي بعده تلقائياً
                             await db.ref(`api_keys/${id}`).update({ status: "exhausted_or_error" });
                         }
                     } catch (err) {
-                        console.log("واجه المفتاح الحالي خطأ، يتم تجربة التالي...", err);
+                        console.error("فشل المفتاح الحالي، جاري الانتقال للتالي...", err);
                         await db.ref(`api_keys/${id}`).update({ status: "error" });
                     }
                 }
@@ -486,27 +502,25 @@
 
             loader.style.display = "none";
 
-            if(finalVideoUrl) {
-                // خصم فيديو واحد من رصيد المستخدم اليومي بنجاح
+            if(successResultText) {
+                // خصم 1 فيديو من رصيد المستخدم اليومي
                 await db.ref('users/' + user.uid).update({
                     videos_left_today: uData.videos_left_today - 1
                 });
 
                 resBox.innerHTML = `
-                    <p style="color:var(--success); text-align:center; margin-bottom:10px; font-weight:bold;">🎉 تم توليد الفيديو بنجاح واستهلاك 1 كريديت!</p>
-                    <video controls style="width:100%; border-radius:10px; border:1px solid #333;">
-                        <source src="${finalVideoUrl}" type="video/mp4">
-                        متصفحك لا يدعم تشغيل هذا الفيديو.
-                    </video>
+                    <p style="color:var(--success); font-weight:bold; margin-bottom:5px;">🎉 تم إنشاء مَهمة التوليد بنجاح واستهلاك 1 كريديت!</p>
+                    <p style="font-size:12px; color:#aaa; margin-bottom:10px;">استجابة الـ API الرسمية (Task Info):</p>
+                    <div class="api-response-log">${successResultText}</div>
                 `;
                 
-                // تصفير الصورة المرفوعة استعداداً للمرة القادمة
+                // إعادة تهيئة حقول الرفع
                 globalBase64Img = null;
                 document.getElementById('view-upload-img').style.display = "none";
                 document.getElementById('up-hint').style.display = "block";
                 document.getElementById('video-prompt-input').value = "";
             } else {
-                alert("جميع مفاتيح الـ API في السيستم مستهلكة أو معطلة حالياً! تم تسجيل العطل وتنبيه كريم الأدمن.");
+                alert("تم تجربة جميع مفاتيح الـ API المتوفرة ولكنها مستهلكة أو غير صالحة. يرجى تحديث المفاتيح من لوحة الأدمن.");
             }
         }
     </script>
