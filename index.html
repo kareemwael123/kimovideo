@@ -163,20 +163,6 @@
         .loader {
             display: none; text-align: center; margin: 15px 0; color: var(--secondary); font-weight: bold;
         }
-        
-        .api-response-log {
-            background: #000;
-            color: #55efc4;
-            padding: 15px;
-            border-radius: 8px;
-            font-family: monospace;
-            text-align: left;
-            direction: ltr;
-            font-size: 12px;
-            overflow-x: auto;
-            margin-top: 10px;
-            border: 1px solid #222;
-        }
     </style>
 </head>
 <body>
@@ -197,7 +183,7 @@
             <button style="background:#26262b; color:#aaa;" onclick="signWithEmail('register')">إنشاء حساب جديد</button>
         </div>
 
-        <!-- 2. لوحة تحكم الأدمن (كريم وايل) -->
+        <!-- 2. لوحة تحكم الأدمن -->
         <div id="screen-admin" class="screen">
             <div class="top-bar">
                 <h3>مرحباً القائد كريم 👑 (لوحة التحكم)</h3>
@@ -205,7 +191,6 @@
             </div>
             
             <div class="layout-grid">
-                <!-- إدارة الـ APIs -->
                 <div class="card">
                     <h4><i class="fa-solid fa-key"></i> واجهات الـ API (kie.ai)</h4>
                     <input type="text" id="admin-api-key" placeholder="ألصق الـ API Key الجديد هنا">
@@ -215,7 +200,6 @@
                     <div id="admin-apis-list" style="max-height: 200px; overflow-y:auto; margin-top:10px;"></div>
                 </div>
 
-                <!-- إدارة خطط المشتركين تلقائياً -->
                 <div class="card">
                     <h4><i class="fa-solid fa-users"></i> التحكم في اشتراكات الأعضاء</h4>
                     <div id="admin-users-list" style="max-height: 350px; overflow-y:auto;"></div>
@@ -231,7 +215,6 @@
             </div>
 
             <div class="layout-grid">
-                <!-- كارت الباقة والرصيد اليومي -->
                 <div class="card" style="text-align: center;">
                     <h4>تفاصيل اشتراكك</h4>
                     <div style="font-size: 35px; color: var(--primary); margin: 15px 0;"><i class="fa-solid fa-box-open"></i></div>
@@ -239,11 +222,9 @@
                     <p style="margin-top:10px;">الفيديوهات المتاحة لك اليوم: <strong id="user-counter-txt" style="color:var(--success); font-size:20px;">0</strong></p>
                 </div>
 
-                <!-- استوديو التوليد المحدث بالتشكيل المعتمد والـ Polling -->
                 <div class="card">
                     <h4><i class="fa-solid fa-wand-magic-sparkles"></i> استوديو توليد Grok Video</h4>
                     
-                    <!-- صندوق رفع الصور الاختياري -->
                     <div class="upload-box">
                         <i class="fa-solid fa-cloud-arrow-up" style="font-size:22px; color:var(--primary)"></i>
                         <p id="up-hint" style="font-size:12px; color:#888; margin-top:5px;">ارفع صورة تحريك اختيارية (Image to Video)</p>
@@ -264,7 +245,6 @@
     </div>
 
     <script>
-        // إعدادات قاعدة بيانات فايربيز الخاصة بمشروعك
         const firebaseConfig = {
             apiKey: "AIzaSyB48E8FEkT2t_U9kUZYtWLJBxpCtMrAQZY",
             authDomain: "kimo-tecnology.firebaseapp.com",
@@ -416,7 +396,6 @@
             db.ref('users/' + uid).update({ plan: plan, videos_left_today: limit }).then(() => alert("تم التحديث!"));
         }
 
-        // ==================== [ محرك التوليد المطور بالتشكيل الحقيقي ومراقب الأخطاء ] ====================
         async function startGeneratingProcess() {
             const prompt = document.getElementById('video-prompt-input').value.trim();
             const loader = document.getElementById('main-loader');
@@ -446,7 +425,6 @@
             let successResultText = null;
             let activeUsedKey = null;
 
-            // اللوب للتنقل التلقائي وفحص الأخطاء بدقة
             for (let id in apis) {
                 if (apis[id].status === "active") {
                     try {
@@ -454,10 +432,8 @@
                         myHeaders.append("Authorization", `Bearer ${apis[id].value}`);
                         myHeaders.append("Content-Type", "application/json");
 
-                        // اختيار نوع الموديل حسب وجود صورة مرفوعة
                         const modelSelected = globalBase64Img ? "grok-imagine/image-to-video" : "grok-imagine/text-to-video";
 
-                        // البارامترات الرسمية الصارمة المطلوبة من التوثيق لضمان قبول الطلب
                         const inputData = {
                             "prompt": prompt,
                             "aspect_ratio": "2:3",
@@ -483,16 +459,15 @@
                             redirect: "follow"
                         };
 
-                        // ضرب رابط الـ Endpoint الرسمي الصحيح لـ createTask
                         let response = await fetch("https://api.kie.ai/api/v1/jobs/createTask", requestOptions);
                         let resultText = await response.text();
 
                         if (response.status === 200 || response.status === 201) {
                             successResultText = resultText;
-                            activeUsedKey = apis[id].value; // الاحتفاظ بالمفتاح الناجح لعمل فحص دوري به
+                            activeUsedKey = apis[id].value;
                             break; 
                         } else {
-                            console.error(`❌ خطأ في المفتاح [${id}] - كود الحالة: ${response.status}. رد السيرفر:`, resultText);
+                            console.error(`❌ خطأ في المفتاح [${id}] - كود الحالة: ${response.status}.`, resultText);
                             await db.ref(`api_keys/${id}`).update({ status: "exhausted_or_error" });
                         }
                     } catch (err) {
@@ -505,12 +480,10 @@
             loader.style.display = "none";
 
             if(successResultText) {
-                // خصم 1 فيديو من رصيد المستخدم اليومي
                 await db.ref('users/' + user.uid).update({
                     videos_left_today: uData.videos_left_today - 1
                 });
 
-                // تحويل النص المستلم إلى كائن JSON لقراءة الـ taskId
                 const responseData = JSON.parse(successResultText);
                 const taskId = responseData.data.taskId;
 
@@ -521,13 +494,11 @@
                     </div>
                 `;
                 
-                // إعادة تهيئة حقول الرفع والتكست
                 globalBase64Img = null;
                 document.getElementById('view-upload-img').style.display = "none";
                 document.getElementById('up-hint').style.display = "block";
                 document.getElementById('video-prompt-input').value = "";
 
-                // تشغيل التايمر السحري للكشف عن الفيديو
                 startPolling(taskId, activeUsedKey);
 
             } else {
@@ -535,12 +506,11 @@
             }
         }
 
-        // ==================== [ محرك الفحص الدوري التلقائي للمهمة ] ====================
+        // ==================== [ محرك الفحص الدوري التلقائي المحدث لمنع خطأ 404 ] ====================
         function startPolling(taskId, apiKey) {
             const statusText = document.getElementById('status-text');
             const statusContainer = document.getElementById('status-container');
 
-            // تشغيل التايمر كل 15 ثانية للكشف على حالة المهمة
             const checkInterval = setInterval(async () => {
                 try {
                     const myHeaders = new Headers();
@@ -556,18 +526,17 @@
                         redirect: "follow"
                     };
 
-                    let response = await fetch("https://api.kie.ai/api/v1/jobs/getTask", requestOptions);
+                    // تم تحديث الرابط هنا إلى /jobs/status لحل مشكلة السيرفر
+                    let response = await fetch("https://api.kie.ai/api/v1/jobs/status", requestOptions);
                     let resultText = await response.text();
                     let taskData = JSON.parse(resultText);
 
                     if (taskData && taskData.data) {
-                        const taskStatus = taskData.data.status; // قراءة حالة الطلب الحالية
+                        const taskStatus = taskData.data.status;
 
                         if (taskStatus === "SUCCEEDED" || taskStatus === "success") {
-                            // وقف الفحص التلقائي فوراً
                             clearInterval(checkInterval);
                             
-                            // قراءة رابط الفيديو النهائي من رد السيرفر
                             const videoUrl = taskData.data.result || taskData.data.videoUrl || taskData.data.video_url;
 
                             statusContainer.innerHTML = `
@@ -584,7 +553,6 @@
                             statusContainer.innerHTML = `<p style="color:var(--danger); font-weight:bold;">❌ السيرفر فشل في توليد المشهد. يرجى تعديل الوصف والمحاولة من جديد.</p>`;
                         } 
                         else {
-                            // الحالة ما زالت PROCESSING أو PENDING
                             statusText.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin" style="color:var(--primary)"></i> السيرفر يقوم بصناعة الكليب وتأثيراته حالياً... جاري الانتظار ومستمرون في الكشف.`;
                         }
                     }
