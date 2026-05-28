@@ -5,12 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kimo Technology - منصة إنتاج الفيديو الذكية</title>
     
-    <!-- Firebase SDKs (v9 Compat) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
-    <!-- Google Fonts & FontAwesome Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -53,7 +51,7 @@
             border: 1px solid #2c2c35;
         }
 
-        h2, h3 {
+        h2, h3, h4 {
             color: var(--primary);
             margin-bottom: 20px;
             text-align: center;
@@ -94,6 +92,7 @@
         .btn-google { background: #db4437; margin-bottom: 15px; }
         .btn-google:hover { background: #e57373; }
         .btn-danger { background: var(--danger); }
+        .btn-danger:hover { background: #ff7675; }
 
         .screen { display: none; }
         .screen.active { display: block; }
@@ -182,10 +181,9 @@
 
     <div class="container">
 
-        <!-- 1. شاشة تسجيل الدخول والاشتراك -->
         <div id="screen-auth" class="screen active">
             <h2><i class="fa-solid fa-bolt"></i> منصة Kimo Technology للفيديو</h2>
-            <p style="text-align: center; color: #888; margin-bottom: 20px;">توليد كليبات Grok بدقة 480p ولمدة 10 ثوانٍ</p>
+            <p style="text-align: center; color: #888; margin-bottom: 20px;">توليد كليبات Grok بدقة 480p بالهيكل الجديد</p>
             
             <button class="btn-google" onclick="signWithGoogle()"><i class="fa-brands fa-google"></i> الدخول السريع بحساب Google</button>
             
@@ -196,7 +194,6 @@
             <button style="background:#26262b; color:#aaa;" onclick="signWithEmail('register')">إنشاء حساب جديد</button>
         </div>
 
-        <!-- 2. لوحة تحكم الأدمن (كريم وايل) -->
         <div id="screen-admin" class="screen">
             <div class="top-bar">
                 <h3>مرحباً القائد كريم 👑 (لوحة التحكم)</h3>
@@ -204,7 +201,6 @@
             </div>
             
             <div class="layout-grid">
-                <!-- إدارة الـ APIs -->
                 <div class="card">
                     <h4><i class="fa-solid fa-key"></i> واجهات الـ API (kie.ai)</h4>
                     <input type="text" id="admin-api-key" placeholder="ألصق الـ API Key الجديد هنا">
@@ -214,7 +210,6 @@
                     <div id="admin-apis-list" style="max-height: 200px; overflow-y:auto; margin-top:10px;"></div>
                 </div>
 
-                <!-- إدارة خطط المشتركين تلقائياً -->
                 <div class="card">
                     <h4><i class="fa-solid fa-users"></i> التحكم في اشتراكات الأعضاء</h4>
                     <div id="admin-users-list" style="max-height: 350px; overflow-y:auto;"></div>
@@ -222,7 +217,6 @@
             </div>
         </div>
 
-        <!-- 3. لوحة تحكم المستخدم العادي -->
         <div id="screen-user" class="screen">
             <div class="top-bar">
                 <div>أهلاً بك: <span id="user-name" class="badge">..</span></div>
@@ -230,7 +224,6 @@
             </div>
 
             <div class="layout-grid">
-                <!-- كارت الباقة والرصيد اليومي -->
                 <div class="card" style="text-align: center;">
                     <h4>تفاصيل اشتراكك</h4>
                     <div style="font-size: 35px; color: var(--primary); margin: 15px 0;"><i class="fa-solid fa-box-open"></i></div>
@@ -238,11 +231,9 @@
                     <p style="margin-top:10px;">الفيديوهات المتاحة لك اليوم: <strong id="user-counter-txt" style="color:var(--success); font-size:20px;">0</strong></p>
                 </div>
 
-                <!-- استوديو التوليد المحدث بالتشكيل الجديد -->
                 <div class="card">
                     <h4><i class="fa-solid fa-wand-magic-sparkles"></i> استوديو توليد Grok Video</h4>
                     
-                    <!-- صندوق رفع الصور الاختياري -->
                     <div class="upload-box">
                         <i class="fa-solid fa-cloud-arrow-up" style="font-size:22px; color:var(--primary)"></i>
                         <p id="up-hint" style="font-size:12px; color:#888; margin-top:5px;">ارفع صورة تحريك اختيارية (Image to Video)</p>
@@ -263,6 +254,7 @@
     </div>
 
     <script>
+        // داتا الفايربيز المعتمدة لمشروعك
         const firebaseConfig = {
             apiKey: "AIzaSyB48E8FEkT2t_U9kUZYtWLJBxpCtMrAQZY",
             authDomain: "kimo-tecnology.firebaseapp.com",
@@ -287,7 +279,7 @@
 
         function signWithGoogle() {
             const p = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(p).catch(e => alert("مشكلة تسجيل جوجل (تأكد من إضافة الدومين في الـ Firebase Console): " + e.message));
+            auth.signInWithPopup(p).catch(e => alert("مشكلة جوجل (تأكد من إضافة الدومين في الـ Firebase Console): " + e.message));
         }
 
         function signWithEmail(type) {
@@ -414,7 +406,7 @@
             db.ref('users/' + uid).update({ plan: plan, videos_left_today: limit }).then(() => alert("تم التحديث!"));
         }
 
-        // ==================== [ محرك التوليد بالتشكيل الرسمي الجديد ] ====================
+        // ==================== [ محرك التوليد المطور بالتشكيل الحقيقي ومراقب الأخطاء ] ====================
         async function startGeneratingProcess() {
             const prompt = document.getElementById('video-prompt-input').value.trim();
             const loader = document.getElementById('main-loader');
@@ -443,35 +435,33 @@
             const apis = apiSnap.val();
             let successResultText = null;
 
-            // اللوب السحري للتنقل التلقائي بين المفاتيح في حال فشل أي مفتاح
+            // اللوب السحري للتنقل التلقائي وفحص الأخطاء بدقة
             for (let id in apis) {
                 if (apis[id].status === "active") {
                     try {
-                        // إعداد الـ Headers بناءً على التشكيل الرسمي المرسل منك بالظبط
                         const myHeaders = new Headers();
                         myHeaders.append("Authorization", `Bearer ${apis[id].value}`);
                         myHeaders.append("Content-Type", "application/json");
 
-                        // تحديد الموديل بناءً على وجود صورة مرفوعة أم لا
+                        // اختيار نوع الموديل حسب التشكيل بناءً على وجود صورة مرفوعة
                         const modelSelected = globalBase64Img ? "grok-imagine/image-to-video" : "grok-imagine/text-to-video";
 
-                        // تجهيز الـ Body بالتركيبة المطلوبة بالظبط (input داخله الخصائص)
+                        // البارامترات الرسمية الصارمة المطلوبة من التوثيق لضمان قبول الطلب
                         const inputData = {
                             "prompt": prompt,
-                            "aspect_ratio": "16:9",
+                            "aspect_ratio": "2:3",
                             "mode": "normal",
-                            "duration": "10", // طلب المستخدم لـ 10 ثواني
+                            "duration": "6",
                             "resolution": "480p"
                         };
 
-                        // إذا رفع المستخدم صورة يتم دمجها داخل كائن الـ input
                         if (globalBase64Img) {
                             inputData["image_url"] = globalBase64Img;
                         }
 
                         const rawBody = JSON.stringify({
                             "model": modelSelected,
-                            "callBackUrl": "https://kimo-tecnology.firebaseapp.com/api/callback", // رابط افتراضي للـ Callback
+                            "callBackUrl": "https://kimo-tecnology.firebaseapp.com/api/callback",
                             "input": inputData
                         });
 
@@ -482,19 +472,20 @@
                             redirect: "follow"
                         };
 
-                        // ضرب رابط الـ Endpoint الرسمي الصحيح لمنع الـ 404
+                        // ضرب رابط الـ Endpoint الرسمي الصحيح لـ createTask
                         let response = await fetch("https://api.kie.ai/api/v1/jobs/createTask", requestOptions);
                         let resultText = await response.text();
 
                         if (response.status === 200 || response.status === 201) {
                             successResultText = resultText;
-                            break; // نجح الإرسال وإنشاء المهمة! اخرج من اللوب فوراً
+                            break; 
                         } else {
-                            // لو الكريديت خلص أو المفتاح محظور علم عليه كـ معطل عشان السيستم يجرب اللي بعده تلقائياً
+                            // طباعة الأخطاء الحقيقية القادمة من سيرفرهم في الـ Console لمعرفة السبب فوراً
+                            console.error(`❌ خطأ في المفتاح [${id}] - كود الحالة: ${response.status}. رد السيرفر:`, resultText);
                             await db.ref(`api_keys/${id}`).update({ status: "exhausted_or_error" });
                         }
                     } catch (err) {
-                        console.error("فشل المفتاح الحالي، جاري الانتقال للتالي...", err);
+                        console.error("عطل في الاتصال بالشبكة للمفتاح الحالي:", err);
                         await db.ref(`api_keys/${id}`).update({ status: "error" });
                     }
                 }
@@ -510,17 +501,17 @@
 
                 resBox.innerHTML = `
                     <p style="color:var(--success); font-weight:bold; margin-bottom:5px;">🎉 تم إنشاء مَهمة التوليد بنجاح واستهلاك 1 كريديت!</p>
-                    <p style="font-size:12px; color:#aaa; margin-bottom:10px;">استجابة الـ API الرسمية (Task Info):</p>
+                    <p style="font-size:12px; color:#aaa; margin-bottom:10px;">بيانات الـ Task المستلمة:</p>
                     <div class="api-response-log">${successResultText}</div>
                 `;
                 
-                // إعادة تهيئة حقول الرفع
+                // إعادة تهيئة حقول الرفع والتكست
                 globalBase64Img = null;
                 document.getElementById('view-upload-img').style.display = "none";
                 document.getElementById('up-hint').style.display = "block";
                 document.getElementById('video-prompt-input').value = "";
             } else {
-                alert("تم تجربة جميع مفاتيح الـ API المتوفرة ولكنها مستهلكة أو غير صالحة. يرجى تحديث المفاتيح من لوحة الأدمن.");
+                alert("تم تجربة جميع مفاتيح الـ API المتوفرة ولكنها مستهلكة أو غير صالحة. يرجى مراجعة الـ Console (F12) وتحديث المفاتيح أو إعادتها لـ active في الفايربيز.");
             }
         }
     </script>
