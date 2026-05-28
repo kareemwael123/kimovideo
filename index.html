@@ -163,6 +163,12 @@
         .loader {
             display: none; text-align: center; margin: 15px 0; color: var(--secondary); font-weight: bold;
         }
+
+        .debug-console {
+            background: #000; color: #00ff00; font-family: monospace; font-size: 11px; padding: 10px;
+            border-radius: 6px; margin-top: 15px; max-height: 150px; overflow-y: auto; text-align: left;
+            direction: ltr; border: 1px solid #333; display: none;
+        }
     </style>
 </head>
 <body>
@@ -238,6 +244,9 @@
                     
                     <div class="loader" id="main-loader"><i class="fa-solid fa-circle-notch fa-spin"></i> جاري إرسال المهمة وفحص الـ APIs بالترتيب...</div>
                     <div id="video-result-box" style="margin-top: 15px;"></div>
+                    
+                    <!-- لوحة فحص استجابة السيرفر للمطور -->
+                    <div id="debug-log-box" class="debug-console"></div>
                 </div>
             </div>
         </div>
@@ -400,10 +409,13 @@
             const prompt = document.getElementById('video-prompt-input').value.trim();
             const loader = document.getElementById('main-loader');
             const resBox = document.getElementById('video-result-box');
+            const debugBox = document.getElementById('debug-log-box');
 
             if(!prompt) return alert("يرجى كتابة وصف المشهد أولاً!");
 
             resBox.innerHTML = "";
+            debugBox.style.display = "none";
+            debugBox.innerHTML = "";
             loader.style.display = "block";
 
             const user = auth.currentUser;
@@ -467,11 +479,11 @@
                             activeUsedKey = apis[id].value;
                             break; 
                         } else {
-                            console.error(`❌ خطأ في المفتاح [${id}] - كود الحالة: ${response.status}.`, resultText);
+                            console.error(`❌ خطأ في المفتاح [${id}]`, resultText);
                             await db.ref(`api_keys/${id}`).update({ status: "exhausted_or_error" });
                         }
                     } catch (err) {
-                        console.error("عطل في الاتصال بالشبكة للمفتاح الحالي:", err);
+                        console.error("عطل في الاتصال:", err);
                         await db.ref(`api_keys/${id}`).update({ status: "error" });
                     }
                 }
@@ -480,17 +492,19 @@
             loader.style.display = "none";
 
             if(successResultText) {
-                await db.ref('users/' + user.uid).update({
-                    videos_left_today: uData.videos_left_today - 1
-                });
+                // 🛑 تم حذف سطر خصم الكريديت من هنا نهائياً لحماية رصيد مستخدمينك وفلوسك!
 
                 const responseData = JSON.parse(successResultText);
                 const taskId = responseData.data.taskId;
 
+                // إظهار رد السيرفر كاملاً في لوحة الـ Debug للتحقق
+                debugBox.style.display = "block";
+                debugBox.innerText = "=== [رد سيرفر createTask الحقيقي] ===\n" + JSON.stringify(responseData, null, 2);
+
                 resBox.innerHTML = `
-                    <p style="color:var(--success); font-weight:bold; margin-bottom:5px;">🎉 تم إنشاء مَهمة التوليد بنجاح واستهلاك 1 كريديت!</p>
+                    <p style="color:var(--success); font-weight:bold; margin-bottom:5px;">🎉 تم إرسال المهمة للسيرفر بنظام الأمان (الخصم عند الجاهزية فقط)!</p>
                     <div id="status-container" style="background:#26262b; padding:15px; border-radius:8px; margin-top:10px; border:1px solid #3a3a45;">
-                        <p id="status-text"><i class="fa-solid fa-circle-notch fa-spin" style="color:var(--secondary)"></i> جاري معالجة الفيديو وتوليده في السيرفر الآن... (يتم الفحص تلقائياً)</p>
+                        <p id="status-text"><i class="fa-solid fa-circle-notch fa-spin" style="color:var(--secondary)"></i> جاري محاولة فحص حالة الفيديو تلقائياً وبأمان...</p>
                     </div>
                 `;
                 
@@ -502,18 +516,19 @@
                 startPolling(taskId, activeUsedKey);
 
             } else {
-                alert("تم تجربة جميع مفاتيح الـ API المتوفرة ولكنها مستهلكة أو غير صالحة. يرجى مراجعة الـ Console (F12) وتحديث المفاتيح أو إعادتها لـ active في الفايربيز.");
+                alert("جميع المفاتيح مستهلكة أو غير صالحة حالياً.");
             }
         }
 
-        // ==================== [ محرك الفحص الدوري التلقائي المطور والقابل للتعديل السريع ] ====================
+        // ==================== [ محرك الفحص الدوري المؤمن ضد خسارة الرصيد ] ====================
         function startPolling(taskId, apiKey) {
             const statusText = document.getElementById('status-text');
             const statusContainer = document.getElementById('status-container');
+            const debugBox = document.getElementById('debug-log-box');
 
-            // ⚙️ لوحة تحكم دالة الفحص (غير هنا بناءً على توثيق kie.ai الرسمي):
-            const FETCH_METHOD = "POST";  // اكتب هنا GET أو POST
-            const ENDPOINT_URL = "https://api.kie.ai/api/v1/jobs/status"; // اكتب الرابط الصحيح هنا بالظبط
+            // إعدادات مرنة لتغيير الرابط ونوع الطلب عند الفحص بدون خسارة أي شيء
+            const FETCH_METHOD = "POST"; 
+            const ENDPOINT_URL = "https://api.kie.ai/api/v1/jobs/status"; 
 
             const checkInterval = setInterval(async () => {
                 try {
@@ -529,19 +544,22 @@
 
                     let finalUrl = ENDPOINT_URL;
 
-                    // تخصيص إرسال الـ ID تلقائياً بناءً على نوع الـ Method المختار فوق
                     if (FETCH_METHOD === "POST") {
                         requestOptions.body = JSON.stringify({ "taskId": taskId });
-                    } else if (FETCH_METHOD === "GET") {
-                        // لو الـ GET تتطلب الـ ID في آخر الرابط (مثل: jobs/123) شغل السطر اللي تحت:
-                        // finalUrl = `${ENDPOINT_URL}/${taskId}`;
-                        
-                        // لو الـ GET تتطلب الـ ID كبرامتر استعلام (مثل: jobs?taskId=123) شغل السطر اللي تحت:
-                        // finalUrl = `${ENDPOINT_URL}?taskId=${taskId}`;
                     }
 
                     let response = await fetch(finalUrl, requestOptions);
                     let resultText = await response.text();
+                    
+                    // طباعة الرد فوراً في الصندوق الأسود لمشاهدة الـ 404 أو خطأ البيانات مباشرة
+                    debugBox.style.display = "block";
+                    debugBox.innerText += `\n\n=== [فحص دوري - الحالة: ${response.status}] ===\n` + resultText;
+
+                    if (response.status === 404) {
+                        statusText.innerHTML = `<span style="color:var(--danger)"><i class="fa-solid fa-triangle-exclamation"></i> خطأ 404 في رابط الفحص الدوري. (لم يتم خصم أي رصيد من حسابك).</span>`;
+                        return; // لا نوقف التايمر ربما تعدل الرابط، ولا نخصم أي شيء
+                    }
+
                     let taskData = JSON.parse(resultText);
 
                     if (taskData && taskData.data) {
@@ -550,27 +568,34 @@
                         if (taskStatus === "SUCCEEDED" || taskStatus === "success") {
                             clearInterval(checkInterval);
                             
+                            // 👑 [نظام الأمان]: الخصم يتم الآن فقط لأن السيرفر أنهى العمل بنجاح!
+                            const user = auth.currentUser;
+                            const uSnap = await db.ref('users/' + user.uid).get();
+                            const currentLeft = uSnap.val().videos_left_today;
+                            await db.ref('users/' + user.uid).update({
+                                videos_left_today: Math.max(0, currentLeft - 1)
+                            });
+
                             const videoUrl = taskData.data.result || taskData.data.videoUrl || taskData.data.video_url;
 
                             statusContainer.innerHTML = `
-                                <p style="color:var(--success); font-weight:bold; margin-bottom:10px;">👑 كليبك جاهز للمشاهدة والتحميل الآن يا بطل!</p>
+                                <p style="color:var(--success); font-weight:bold; margin-bottom:10px;">👑 كليبك جاهز ومبروك عليك يا بطل!</p>
                                 <video controls autoplay style="width:100%; border-radius:8px; border:1px solid #444; max-height:400px; background:#000;">
                                     <source src="${videoUrl}" type="video/mp4">
-                                    متصفحك لا يدعم تشغيل الفيديو.
                                 </video>
-                                <a href="${videoUrl}" target="_blank" style="display:block; text-align:center; background:var(--success); color:white; padding:10px; border-radius:8px; margin-top:10px; text-decoration:none; font-weight:bold;"><i class="fa-solid fa-download"></i> تحميل الفيديو مباشرة</a>
+                                <a href="${videoUrl}" target="_blank" style="display:block; text-align:center; background:var(--success); color:white; padding:10px; border-radius:8px; margin-top:10px; text-decoration:none; font-weight:bold;"><i class="fa-solid fa-download"></i> تحميل الفيديو</a>
                             `;
                         } 
                         else if (taskStatus === "FAILED" || taskStatus === "failed") {
                             clearInterval(checkInterval);
-                            statusContainer.innerHTML = `<p style="color:var(--danger); font-weight:bold;">❌ السيرفر فشل في توليد المشهد. يرجى تعديل الوصف والمحاولة من جديد.</p>`;
+                            statusContainer.innerHTML = `<p style="color:var(--danger); font-weight:bold;">❌ السيرفر فشل في توليد المشهد.</p>`;
                         } 
                         else {
-                            statusText.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin" style="color:var(--primary)"></i> السيرفر يقوم بصناعة الكليب وتأثيراته حالياً... جاري الانتظار ومستمرون في الكشف.`;
+                            statusText.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin" style="color:var(--primary)"></i> معالجة مستمرة في السيرفر... الرصيد آمن تماماً وجاري الانتظار.`;
                         }
                     }
                 } catch (err) {
-                    console.error("خطأ أثناء الكشف الدوري على المهمة:", err);
+                    console.error("خطأ أثناء الكشف:", err);
                 }
             }, 15000); 
         }
