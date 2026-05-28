@@ -506,10 +506,14 @@
             }
         }
 
-        // ==================== [ محرك الفحص الدوري التلقائي المحدث لمنع خطأ 404 ] ====================
+        // ==================== [ محرك الفحص الدوري التلقائي المطور والقابل للتعديل السريع ] ====================
         function startPolling(taskId, apiKey) {
             const statusText = document.getElementById('status-text');
             const statusContainer = document.getElementById('status-container');
+
+            // ⚙️ لوحة تحكم دالة الفحص (غير هنا بناءً على توثيق kie.ai الرسمي):
+            const FETCH_METHOD = "POST";  // اكتب هنا GET أو POST
+            const ENDPOINT_URL = "https://api.kie.ai/api/v1/jobs/status"; // اكتب الرابط الصحيح هنا بالظبط
 
             const checkInterval = setInterval(async () => {
                 try {
@@ -517,17 +521,26 @@
                     myHeaders.append("Authorization", `Bearer ${apiKey}`);
                     myHeaders.append("Content-Type", "application/json");
 
-                    const rawBody = JSON.stringify({ "taskId": taskId });
-
-                    const requestOptions = {
-                        method: "POST",
+                    let requestOptions = {
+                        method: FETCH_METHOD,
                         headers: myHeaders,
-                        body: rawBody,
                         redirect: "follow"
                     };
 
-                    // تم تحديث الرابط هنا إلى /jobs/status لحل مشكلة السيرفر
-                    let response = await fetch("https://api.kie.ai/api/v1/jobs/status", requestOptions);
+                    let finalUrl = ENDPOINT_URL;
+
+                    // تخصيص إرسال الـ ID تلقائياً بناءً على نوع الـ Method المختار فوق
+                    if (FETCH_METHOD === "POST") {
+                        requestOptions.body = JSON.stringify({ "taskId": taskId });
+                    } else if (FETCH_METHOD === "GET") {
+                        // لو الـ GET تتطلب الـ ID في آخر الرابط (مثل: jobs/123) شغل السطر اللي تحت:
+                        // finalUrl = `${ENDPOINT_URL}/${taskId}`;
+                        
+                        // لو الـ GET تتطلب الـ ID كبرامتر استعلام (مثل: jobs?taskId=123) شغل السطر اللي تحت:
+                        // finalUrl = `${ENDPOINT_URL}?taskId=${taskId}`;
+                    }
+
+                    let response = await fetch(finalUrl, requestOptions);
                     let resultText = await response.text();
                     let taskData = JSON.parse(resultText);
 
